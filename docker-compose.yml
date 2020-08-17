@@ -1,0 +1,82 @@
+version: '3'
+services:
+  odfe-node1:
+    image: amazon/opendistro-for-elasticsearch:1.4.0
+    container_name: es-dev.awstweaker.com
+    environment:
+      - cluster.name=ultra-msp
+      - node.name=es-dev.awstweaker.com
+      - discovery.seed_hosts=es-dev.awstweaker.com,es-node-dev.awstweaker.com
+      - cluster.initial_master_nodes=es-dev.awstweaker.com,es-node-dev.awstweaker.com
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+      - network.host=0.0.0.0 # required if not using the demo Security configuration
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the Elasticsearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - odfe-data1:/usr/share/elasticsearch/data
+      - ./es-dev.awstweaker.com/cert1.pem:/usr/share/elasticsearch/config/root-ca.pem
+      - ./es-dev.awstweaker.com/fullchain1.pem:/usr/share/elasticsearch/config/node.pem
+      - ./es-dev.awstweaker.com/privkey1.pem:/usr/share/elasticsearch/config/node-key.pem
+      - ./custom-elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - 9200:9200
+      - 9600:9600 # required for Performance Analyzer
+    networks:
+      - odfe-net
+  odfe-node2:
+    image: amazon/opendistro-for-elasticsearch:1.4.0
+    container_name: es-node-dev.awstweaker.com
+    environment:
+      - cluster.name=ultra-msp
+      - node.name=es-node-dev.awstweaker.com
+      - discovery.seed_hosts=es-dev.awstweaker.com,es-node-dev.awstweaker.com
+      - cluster.initial_master_nodes=es-dev.awstweaker.com,es-node-dev.awstweaker.com
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - network.host=0.0.0.0
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - odfe-data2:/usr/share/elasticsearch/data
+      - ./es-dev.awstweaker.com/cert1.pem:/usr/share/elasticsearch/config/root-ca.pem
+      - ./es-dev.awstweaker.com/fullchain1.pem:/usr/share/elasticsearch/config/node.pem
+      - ./es-dev.awstweaker.com/privkey1.pem:/usr/share/elasticsearch/config/node-key.pem
+      - ./custom-elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    networks:
+      - odfe-net
+  kibana:
+    image: amazon/opendistro-for-elasticsearch-kibana:1.4.0
+    container_name: odfe-kibana
+    ports:
+      - 5601:5601
+    expose:
+      - "5601"
+    environment:
+      ELASTICSEARCH_URL: https://es-dev.awstweaker.com:9200
+      ELASTICSEARCH_HOSTS: https://es-dev.awstweaker.com:9200
+    volumes:
+      - ./custom-kibana.yml:/usr/share/kibana/config/kibana.yml
+      - ./kibana-dev.awstweaker.com/cert1.pem:/usr/share/elasticsearch/config/root-ca.pem
+      - ./kibana-dev.awstweaker.com/fullchain1.pem:/usr/share/elasticsearch/config/node.pem
+      - ./kibana-dev.awstweaker.com/privkey1.pem:/usr/share/elasticsearch/config/node-key.pem
+    networks:
+      - odfe-net
+
+volumes:
+  odfe-data1:
+  odfe-data2:
+
+networks:
+  odfe-net:
+

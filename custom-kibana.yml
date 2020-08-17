@@ -1,0 +1,7 @@
+elasticsearch.username: admin
+elasticsearch.password: admin
+server.host: 0.0.0.0
+server.ssl.enabled: true
+server.ssl.certificateAuthorities: /usr/share/elasticsearch/config/root-ca.pem
+server.ssl.certificate: /usr/share/elasticsearch/config/node.pem
+server.ssl.key: /usr/share/elasticsearch/config/node-key.pem
